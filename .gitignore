@@ -131,3 +131,7 @@ dmypy.json
 # Editors
 .idea/
 *.bak
+
+#java
+.jar
+.class
