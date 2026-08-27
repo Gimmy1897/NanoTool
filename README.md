@@ -1,4 +1,20 @@
-## Cell Magic Wand
+## NanoTool Dashboard
+
+NanoTool Dashboard is an Fiji/ImageJ interface for the main NanoTool image-analysis functions. It provides quick access to:
+
+- **Set scale (from TEM .tiff metadata):** reads the `XpixCal` value and unit from the current image metadata and sets the image scale automatically.
+- **Apply Mean filter (2 px radius):** applies a mean filter with a 2 px radius to the current image to reduce local contrast variations.
+- **Open Cell Magic Wand:** starts the Cell Magic Wand tool for selecting cell ROIs directly on the image.
+- **Cell Magic Wand settings:** opens the Cell Magic Wand configuration dialog, including image type, diameter range, and roughness.
+- **Measure nanoparticles:** measures the ROIs in the ROI Manager and adds an `Eq. Diameter` result column based on each ROI area.
+
+The dashboard is available when the NanoTool plugin is installed in Fiji/ImageJ.
+
+> NanoTool - created by Gimmy1897dev with ❤️ - Aug. 2026
+
+
+>Cell Magic Wand plugin - created by Theo Walker - Jan. 2014
+## Cell Magic Wand 
 
 ImageJ plugin for rapid human-assisted segmentation of cells in images.
 

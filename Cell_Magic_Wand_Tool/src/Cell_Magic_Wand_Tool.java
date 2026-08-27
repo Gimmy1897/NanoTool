@@ -66,6 +66,7 @@ public class Cell_Magic_Wand_Tool extends PlugInTool {
 							rm.select(i);
 							rm.runCommand("Delete");
 							imp.deleteRoi();
+							NanoToolDashboard.updateRoiCount();
 							return;
 						}
 					}
@@ -75,6 +76,7 @@ public class Cell_Magic_Wand_Tool extends PlugInTool {
 				PolygonRoi roi = makeRoi(x,y,imp);
 				rm.addRoi(roi);
 				imp.setRoi(roi);
+				NanoToolDashboard.updateRoiCount();
 			}
 			else{
 				//Just draw the ROI and place it, no need for ROI manager trickery
@@ -146,7 +148,7 @@ public class Cell_Magic_Wand_Tool extends PlugInTool {
 	}
 
     private void loadPrefs(){
-        brightOrDarkStr=Prefs.get("CellMagicWand.brightOrDarkStr",Constants.BRIGHT_CELLS);
+        brightOrDarkStr=Prefs.get("CellMagicWand.brightOrDarkStr",Constants.DARK_CELLS);
 		minDiameter=(int)Prefs.get("CellMagicWand.minDiameter",Constants.DEFAULT_MIN_DIAMETER);
         maxDiameter=(int)Prefs.get("CellMagicWand.maxDiameter",Constants.DEFAULT_MAX_DIAMETER);
         circumferenceSampleRate=(double)Prefs.get("CellMagicWand.circumferenceSampleRate",Constants.DEFAULT_CIRCUMFERENCE_SAMPLE_RATE);
@@ -179,7 +181,7 @@ public class Cell_Magic_Wand_Tool extends PlugInTool {
 	}
 
 	public String getToolName() {
-		return "Cell Magic Wand";
+		return "Cell Magic Wand Tool";
 	}
 	
 	public static void print(String s){
