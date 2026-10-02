@@ -24,7 +24,7 @@ public class EqDiameterUtility {
             return;
         }
 
-        ensureAreaMeasurement();
+        ensureDefaultMeasurements();
 
         String macroCode =
                 "roiManager(\"Measure\");\n" +
@@ -41,10 +41,11 @@ public class EqDiameterUtility {
         IJ.showStatus("Equivalent diameter calculated.");
     }
 
-    private static void ensureAreaMeasurement() {
+    public static void ensureDefaultMeasurements() {
         int current = Analyzer.getMeasurements();
-        if ((current & Measurements.AREA) == 0) {
-            Analyzer.setMeasurements(current | Measurements.AREA);
+        int required = Measurements.AREA | Measurements.SHAPE_DESCRIPTORS | Measurements.PERIMETER | Measurements.FERET;
+        if ((current & required) != required) {
+            Analyzer.setMeasurements(current | required);
         }
     }
 }

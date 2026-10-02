@@ -8,9 +8,13 @@ NanoTool Dashboard is an Fiji/ImageJ interface for the main NanoTool image-analy
 - **Cell Magic Wand settings:** opens the Cell Magic Wand configuration dialog, including image type, diameter range, and roughness.
 - **Measure nanoparticles:** measures the ROIs in the ROI Manager and adds an `Eq. Diameter` result column based on each ROI area.
 
+- **Export measurements / ROIs:** exports the current ROI Manager ROIs and the current Results table to a user-specified directory. The ROIs are saved in a `.zip` file, and the measurements are saved in a `.csv` file.
+
+- **Import ROIs:** imports ROIs from a `.zip` file and adds them to the current ROI Manager.
+
 The dashboard is available when the NanoTool plugin is installed in Fiji/ImageJ.
 
-> NanoTool - created by Gimmy1897dev with ❤️ - Aug. 2026
+> NanoTool - made with ❤️ in Pisa by Gimmy1897dev - Sept. 2026
 
 
 >Cell Magic Wand plugin - created by Theo Walker - Jan. 2014
