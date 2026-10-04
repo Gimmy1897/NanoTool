@@ -104,7 +104,7 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
                 btnExportMeasurements, btnExportRois, btnImport);
         JPanel exportSection = createSectionPanel("Import and Export", exportActions);
 
-        JLabel footerLabel = new JLabel("NanoTool v" + VERSION + " - made with <3 in Pisa\nby Gimmy1897.dev");
+        JLabel footerLabel = new JLabel("NanoTool v" + VERSION + ", Oct '26 - made with <3 in Pisa by Gimmy1897.dev");
         footerLabel.setFont(new Font("Dialog", Font.ITALIC, 10));
         footerLabel.setForeground(Color.GRAY);
         footerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);

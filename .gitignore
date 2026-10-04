@@ -76,6 +76,10 @@ target/
 
 # Java compiled output
 *.class
+bin/
+
+# Build artifacts published separately in GitHub Releases
+Cell_Magic_Wand_Tool/*.jar
 
 # Jupyter Notebook
 .ipynb_checkpoints

@@ -1,23 +1,92 @@
 ## NanoTool Dashboard
 
-NanoTool Dashboard is an Fiji/ImageJ interface for the main NanoTool image-analysis functions. It provides quick access to:
+NanoTool Dashboard is an ImageJ/Fiji plugin for nanoparticle image analysis.
 
-- **Set scale (from TEM .tiff metadata):** reads the `XpixCal` value and unit from the current image metadata and sets the image scale automatically.
-- **Apply Mean filter (2 px radius):** applies a mean filter with a 2 px radius to the current image to reduce local contrast variations.
-- **Open Cell Magic Wand:** starts the Cell Magic Wand tool for selecting cell ROIs directly on the image.
-- **Cell Magic Wand settings:** opens the Cell Magic Wand configuration dialog, including image type, diameter range, and roughness.
-- **Measure nanoparticles:** measures the ROIs in the ROI Manager and adds an `Eq. Diameter` result column based on each ROI area.
+**Current version:** 1.0.2
 
-- **Export measurements / ROIs:** exports the current ROI Manager ROIs and the current Results table to a user-specified directory. The ROIs are saved in a `.zip` file, and the measurements are saved in a `.csv` file.
+The dashboard provides:
 
-- **Import ROIs:** imports ROIs from a `.zip` file and adds them to the current ROI Manager.
+- automatic scale setup from TEM metadata (`XpixCal`);
+- a 2 px radius Mean filter and a persistent count of how many times it was applied;
+- the Cell Magic Wand selection tool and its settings;
+- ROI counting and nanoparticle measurement with equivalent diameter;
+- project management (`Open`, `Save`, `Save As`, and `Close Project`);
+- import and export of ROI sets and measurement results;
+- automatic synchronization between the ROI Manager and the image overlay.
 
-The dashboard is available when the NanoTool plugin is installed in Fiji/ImageJ.
+### Project files
 
-> NanoTool - made with ❤️ in Pisa by Gimmy1897dev - Sept. 2026
+NanoTool projects use the `.ntproj` extension. A project is an ImageJ-compatible TIFF whose extension has been changed to `.ntproj`.
 
+This format keeps the image, ImageJ calibration, ROI overlay, and NanoTool metadata together. It can be opened directly in ImageJ/Fiji by double-clicking the file or dragging it onto the ImageJ/Fiji window.
 
->Cell Magic Wand plugin - created by Theo Walker - Jan. 2014
+### Installation
+
+The installer is Windows-only and requires PowerShell, which is included with supported Windows versions.
+
+The latest release files are available in the repository's
+[GitHub Releases](https://github.com/Gimmy1897/NanoTool/releases) section.
+
+There are two installation options:
+
+#### Manual installation
+
+Download the following files from the release:
+
+```text
+NanoTool_Launcher_Tool.jar
+RunAtStartup.ijm
+```
+
+Copy them manually to the ImageJ/Fiji installation:
+
+```text
+NanoTool_Launcher_Tool.jar -> plugins\Tools
+RunAtStartup.ijm            -> macros
+```
+
+Restart ImageJ/Fiji after copying the files.
+
+#### PowerShell installer
+
+Alternatively, download the ZIP package from the release. The ZIP contains
+these four files in the same folder:
+
+```text
+install_nanotool.bat
+install_nanotool.ps1
+NanoTool_Launcher_Tool.jar
+RunAtStartup.ijm
+```
+
+Extract the ZIP and run:
+
+```text
+install_nanotool.bat
+```
+
+The installer:
+
+1. searches common locations for ImageJ and Fiji installations;
+2. displays every installation it finds;
+3. lets the user select an installation by number;
+4. uses option `0` to open a folder selector for a different installation;
+5. copies `NanoTool_Launcher_Tool.jar` to `plugins\Tools`;
+6. copies `RunAtStartup.ijm` to `macros`.
+
+If the installation is not found automatically, choose `0` and select the ImageJ/Fiji installation folder. Restart ImageJ/Fiji after installation.
+
+`RunAtStartup.ijm` is required to detect `.ntproj` files opened by ImageJ/Fiji and to open the NanoTool dashboard automatically.
+
+### Building
+
+Run `Cell_Magic_Wand_Tool\build.bat` from a Java development environment with ImageJ 1.48 available in the project's `lib` folder. The build creates the launcher JAR and copies `RunAtStartup.ijm` next to the installer files.
+
+The launcher JAR already contains the NanoTool and Cell Magic Wand classes. A separate `Cell_Magic_Wand_Tool.jar` is not required for NanoTool installation.
+
+> NanoTool - made with <3 in Pisa by gimmy1897.dev - October 2026
+
+> Cell Magic Wand plugin created by Theo Walker - January 2014
 ## Cell Magic Wand 
 
 ImageJ plugin for rapid human-assisted segmentation of cells in images.
@@ -28,17 +97,18 @@ Click on a cell. Get an ROI around the cell.
 
 ![demo](img/demo_anim.gif)
 
-### Download and Install
+### Standalone Cell Magic Wand
 
-Download: [Cell_Magic_Wand_Tool.jar](Cell_Magic_Wand_Tool/Cell_Magic_Wand_Tool.jar)
+Cell Magic Wand is embedded in the NanoTool launcher. A separate
+`Cell_Magic_Wand_Tool.jar` is not required when installing NanoTool.
 
-Version Required: [ImageJ](https://imagej.nih.gov/ij/download.html) version 1.46d (January 2012) or later.
+For standalone use, put
+[Cell_Magic_Wand_Tool.jar](Cell_Magic_Wand_Tool/Cell_Magic_Wand_Tool.jar)
+into the `plugins\Tools` directory of an ImageJ installation and restart
+ImageJ. The standalone plugin requires
+[ImageJ](https://imagej.nih.gov/ij/download.html) version 1.46d or later.
 
-Install: Put Cell_Magic_Wand_Tool.jar into the `plugins\Tools` directory of your ImageJ installation. You may need to create the "Tools" directory.
-
-Example: `C:\Program Files\ImageJ\plugins\Tools\Cell_Magic_Wand_Tool.jar`.
-
-Restart ImageJ and select Cell Magic Wand Tool from the ">>" menu on the right side of the toolbar:
+Select Cell Magic Wand Tool from the ">>" menu on the right side of the toolbar:
 
 ![fiji_arrow](img/menu_arrows.png)
 
