@@ -8,7 +8,7 @@ import java.awt.event.ActionListener;
 
 public class NanoToolDashboard extends PlugInFrame implements PlugIn {
 
-    private static final String VERSION = "1.0.2";
+    private static final String VERSION = "1.0.3";
     private static NanoToolDashboard dashboard;
     private static ij.ImagePlus analysisImageOverride;
     private final Cell_Magic_Wand_Tool wandTool = new Cell_Magic_Wand_Tool();
@@ -73,7 +73,7 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         scaleLabel.setMinimumSize(scaleLabel.getPreferredSize());
         scaleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         updateScaleLabel();
-        btnMeanFilter = makeButton("Mean filter (r=2)", e -> {
+        btnMeanFilter = makeButton("Mean filter (r=2 px)", e -> {
             MeanFilterUtility.run();
             setStatus("Mean filter applied.");
         });
