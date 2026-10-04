@@ -4,8 +4,6 @@
 
 package cellMagicWand;
 
-import java.util.ArrayList;
-
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.io.Opener;
@@ -17,7 +15,6 @@ public class PolarTest {
 		String testDataDir = "C:/netbeans-projects/Polar_Cell/src/testData/";
 		
 		String imagePath = testDataDir + "testCircles.tif";
-		//String imagePath = testDataDir + "white.tif";
         Opener o = new Opener();
         ImagePlus img = o.openImage(imagePath);
         
@@ -62,41 +59,6 @@ public class PolarTest {
             print("Time elapsed: " + (endTime-startTime) + "ms");
 
             
-            //draw the edge points
-            /*
-            int[][] edgePoints = pt.getPolarEdgePoints();
-            for(int j = 0; j < edgePoints[0].length; j++){
-        		sp2.set(edgePoints[0][j], edgePoints[1][j], 65535);
-            }
-            */
-            
-            
-            /*
-        	ArrayList<RingPixel> ringPixels = pt.getEdgePointsRoi();
-        	for(int j = 0; j < ringPixels.size(); j++){
-        		int x = ringPixels.get(j).x;
-        		int y = ringPixels.get(j).y;
-        		int angleRange = (int) Math.round((ringPixels.get(j).thetaMax-ringPixels.get(j).thetaMin)*20000);
-                sp2.set(x, y, 65535);
-        	}*/
-            
-            
-            /*
-        	
-        	//draw the magnified edge points
-            int[][] edgePointsMag = pt.getEdgePointsMagnified(magFactor);
-            for(int j = 0; j < edgePointsMag[0].length; j++){
-        		sp.set(edgePointsMag[0][j]+1, edgePointsMag[1][j]+1, 65535);
-            }
-
-            //draw the 4-connected edge points *crosses fingers*
-            ArrayList<Pixel> cellEdge = pt.getPixelCellEdge();
-            print("lol cell edge size is "+ cellEdge.size());
-            for(int j = 0; j < cellEdge.size(); j++){
-        		sp2.set(cellEdge.get(j).x+1, cellEdge.get(j).y+1, 65535);
-            }
-            */
-        	
         }
 
         //write out edge image

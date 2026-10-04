@@ -5,8 +5,6 @@
 package cellMagicWand;
 
 public class Constants {
-	public static double CIRCLE_THETA_MAX = 360; //
-
 	public static final String PROGRAM_NAME = "CellMagicWand";
 
 	public static final int THETA_SAMPLES_FOR_RADIUS_FINDING = 100;
@@ -25,8 +23,4 @@ public class Constants {
 	//Padding the polar image gives better dynamic programming results (Sun & Pallottino 2003).
 	public static final double POLAR_PADDING_PERCENT = 20; //Set at 0 to 100
 	
-	/* Probably unused */
-    public static final int SHORT_WHITE = 65535; //used in range scaling USHORT type images
-    public static final int BYTE_WHITE = 255; //used in range scaling color & byte images
-    public static final int GREY_12BIT = 2048;
 }

@@ -101,7 +101,10 @@ public class NanoToolProjectUtility {
     }
 
     public static void closeProject() {
-        ImagePlus imp = WindowManager.getCurrentImage();
+        ImagePlus imp = NanoToolDashboard.getAnalysisImage();
+        if (imp == null) {
+            imp = WindowManager.getCurrentImage();
+        }
         if (imp == null || currentProjectFile == null) {
             return;
         }
@@ -120,6 +123,8 @@ public class NanoToolProjectUtility {
         currentProjectFile = null;
         overlayImage = null;
         overlaySignature = null;
+        NanoToolDashboard.clearAnalysisImage();
+        NanoToolDashboard.updateRoiCount();
     }
 
     /**

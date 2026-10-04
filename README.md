@@ -10,6 +10,8 @@ The dashboard provides:
 - a 2 px radius Mean filter and a persistent count of how many times it was applied;
 - the Cell Magic Wand selection tool and its settings;
 - ROI counting and nanoparticle measurement with equivalent diameter;
+- equivalent diameter statistics and histogram visualization;
+- interactive ImageJ histogram with lognormal distribution fitting;
 - project management (`Open`, `Save`, `Save As`, and `Close Project`);
 - import and export of ROI sets and measurement results;
 - automatic synchronization between the ROI Manager and the image overlay.

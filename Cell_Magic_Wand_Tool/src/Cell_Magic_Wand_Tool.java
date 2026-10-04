@@ -125,11 +125,6 @@ public class Cell_Magic_Wand_Tool extends PlugInTool {
 		gd.addNumericField("Minimum Diameter: ", minDiameter, 0);
 		gd.addNumericField("Maximum Diameter: ", maxDiameter, 0);
 		gd.addNumericField("Roughness: ", circumferenceSampleRate, 1);
-		/* 
-		gd.addMessage("");
-		gd.addMessage("Created by Theo Walker at the Max Planck Florida Institute for Neuroscience.");
-		gd.addMessage("theo.walker@mpfi.org");
-		*/
         gd.setResizable(false);
         gd.showDialog();
         if (gd.wasCanceled()) return;
