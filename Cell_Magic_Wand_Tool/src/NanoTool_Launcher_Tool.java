@@ -10,8 +10,6 @@ public class NanoTool_Launcher_Tool extends PlugInTool {
 
     private static final String TOOL_ICON = "C555D70Db0D31D41D71D81Db1D42D52D72D82Da2Db2D43D53D73D83Da3De3D04D14D24D54D64D94Da4Dc4Dd4De4D25D35D45Db5Dc5Dd5D46Db6Dc6D17D27D37Dc7Dd7De7Df7D08D18D28D38Dc8Dd8De8D49Db9D2aD3aD4aDbaDcaDdaD1bD2bD3bD5bD6bD9bDabDdbDebD1cD5cD7cD8cD9cDacDbcD4dD5dD7dD8dDadDbdD4eD7eD8eDbeD8fC128D74D84D55D65D95Da5D56Da6D47Db7D48Db8D59Da9D5aD6aD9aDaaD7bD8bC23aD85D66Da7D69D99C24dD76D86D97D78C139D75Da8D8aC239D57D58D7aC24cD67D98D89C35eD77D88C24bD68D79C23bD96C35fD87";
 
-    private static NanoToolDashboard dashboard;
-
     public NanoTool_Launcher_Tool() {
     }
 
@@ -29,12 +27,7 @@ public class NanoTool_Launcher_Tool extends PlugInTool {
     }
 
     private void showDashboard() {
-        if (dashboard == null || !dashboard.isDisplayable()) {
-            dashboard = new NanoToolDashboard();
-        } else {
-            dashboard.setVisible(true);
-            dashboard.toFront();
-        }
+        NanoToolDashboard.showDashboard();
     }
 
     public String getToolIcon() {

@@ -1,0 +1,1 @@
+call("NanoToolStartup.install");

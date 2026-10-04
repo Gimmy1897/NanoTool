@@ -74,6 +74,9 @@ docs/_build/
 # PyBuilder
 target/
 
+# Java compiled output
+*.class
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

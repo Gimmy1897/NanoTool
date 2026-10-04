@@ -15,117 +15,113 @@ public class RoiExportImportUtility {
 
     private RoiExportImportUtility() {}
 
-    public static void exportData() {
+    // -------------------------------------------------------------------------
+    // Export Measurements (.txt)
+    // -------------------------------------------------------------------------
+
+    public static void exportMeasurements() {
         ImagePlus imp = WindowManager.getCurrentImage();
         if (imp == null) {
-            IJ.showMessage("Export NanoTool Data", "No images are open.");
+            IJ.showMessage("Export Measurements", "No images are open.");
+            return;
+        }
+
+        ResultsTable rt = Analyzer.getResultsTable();
+        int resultsCount = rt == null ? 0 : rt.getCounter();
+
+        // If no results yet but ROIs exist, measure automatically
+        if (resultsCount == 0) {
+            RoiManager rm = RoiManager.getInstance2();
+            if (rm != null && rm.getCount() > 0) {
+                EqDiameterUtility.run();
+                rt = Analyzer.getResultsTable();
+                resultsCount = rt == null ? 0 : rt.getCounter();
+            }
+        }
+
+        if (resultsCount == 0) {
+            IJ.showMessage("Export Measurements", "No measurement results available.\nRun \"Measure nanoparticles\" first.");
+            return;
+        }
+
+        String baseName = stripExtension(imp.getTitle());
+        SaveDialog sd = new SaveDialog("Export Measurements", baseName + "_measurements", ".txt");
+        String dir = sd.getDirectory();
+        String name = sd.getFileName();
+
+        if (dir == null || name == null || name.trim().isEmpty()) {
+            return;
+        }
+
+        if (!name.toLowerCase().endsWith(".txt")) {
+            name = name + ".txt";
+        }
+
+        File target = getUniqueFile(dir, stripExtension(name), ".txt");
+        boolean renamed = !target.getName().equals(name);
+
+        try {
+            rt.save(target.getAbsolutePath());
+            String msg = "Measurements saved to:\n" + target.getAbsolutePath();
+            if (renamed) {
+                msg += "\n\nNote: A file with the same name already existed. Saved with a different name to avoid overwriting.";
+            }
+            IJ.showStatus("Measurements exported.");
+            IJ.showMessage("Export Measurements", msg);
+        } catch (Exception e) {
+            IJ.showMessage("Export Measurements", "Error saving measurements: " + e.getMessage());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Export ROIs (.zip)
+    // -------------------------------------------------------------------------
+
+    public static void exportRois() {
+        ImagePlus imp = WindowManager.getCurrentImage();
+        if (imp == null) {
+            IJ.showMessage("Export ROIs", "No images are open.");
             return;
         }
 
         RoiManager rm = RoiManager.getInstance2();
-        int roiCount = rm == null ? 0 : rm.getCount();
-        ResultsTable rt = Analyzer.getResultsTable();
-        int resultsCount = rt == null ? 0 : rt.getCounter();
-
-        if (roiCount == 0 && resultsCount == 0) {
-            IJ.showMessage("Export NanoTool Data", "No ROIs or measurement results available to export.");
+        if (rm == null || rm.getCount() == 0) {
+            IJ.showMessage("Export ROIs", "ROI Manager is empty. No ROIs to export.");
             return;
         }
 
-        GenericDialog gd = new GenericDialog("Export Options");
-        gd.addCheckbox("Export measurements (.txt)", true);
-        gd.addCheckbox("Export ROIs (.zip)", true);
-        gd.showDialog();
-
-        if (gd.wasCanceled()) {
-            return;
-        }
-
-        boolean exportResults = gd.getNextBoolean();
-        boolean exportRois = gd.getNextBoolean();
-
-        if (!exportResults && !exportRois) {
-            IJ.showMessage("Export NanoTool Data", "No export items were selected.");
-            return;
-        }
-
-        if (exportResults && resultsCount == 0 && roiCount > 0) {
-            // Automatically calculate measurements if ROIs exist but have not been measured yet
-            EqDiameterUtility.run();
-            rt = Analyzer.getResultsTable();
-            resultsCount = rt == null ? 0 : rt.getCounter();
-        }
-
-        String title = imp.getTitle();
-        String baseName = title.contains(".") ? title.substring(0, title.lastIndexOf('.')) : title;
-
-        SaveDialog sd = new SaveDialog("Export NanoTool Data", baseName, "");
+        String baseName = stripExtension(imp.getTitle());
+        SaveDialog sd = new SaveDialog("Export ROIs", baseName + "_rois", ".zip");
         String dir = sd.getDirectory();
-        String filename = sd.getFileName();
+        String name = sd.getFileName();
 
-        if (dir == null || filename == null || filename.trim().isEmpty()) {
+        if (dir == null || name == null || name.trim().isEmpty()) {
             return;
         }
 
-        // Strip extension if user entered one, to build base name
-        if (filename.contains(".")) {
-            filename = filename.substring(0, filename.lastIndexOf('.'));
+        if (!name.toLowerCase().endsWith(".zip")) {
+            name = name + ".zip";
         }
 
-        boolean autoRenamed = false;
-        File savedTxtFile = null;
-        File savedZipFile = null;
+        File target = getUniqueFile(dir, stripExtension(name), ".zip");
+        boolean renamed = !target.getName().equals(name);
 
-        if (exportResults) {
-            if (rt == null || resultsCount == 0) {
-                IJ.showMessage("Export NanoTool Data", "Results table is empty. Could not export measurements.");
-            } else {
-                File targetFile = getUniqueFile(dir, filename + "_measurements", ".txt");
-                if (!targetFile.getName().equals(filename + "_measurements.txt")) {
-                    autoRenamed = true;
-                }
-                try {
-                    rt.save(targetFile.getAbsolutePath());
-                    savedTxtFile = targetFile;
-                } catch (Exception ex) {
-                    IJ.showMessage("Export NanoTool Data", "Error saving measurements file: " + ex.getMessage());
-                }
+        try {
+            rm.runCommand("Save", target.getAbsolutePath());
+            String msg = "ROIs saved to:\n" + target.getAbsolutePath();
+            if (renamed) {
+                msg += "\n\nNote: A file with the same name already existed. Saved with a different name to avoid overwriting.";
             }
+            IJ.showStatus("ROIs exported.");
+            IJ.showMessage("Export ROIs", msg);
+        } catch (Exception e) {
+            IJ.showMessage("Export ROIs", "Error saving ROIs: " + e.getMessage());
         }
-
-        if (exportRois) {
-            if (rm == null || roiCount == 0) {
-                IJ.showMessage("Export NanoTool Data", "ROI Manager is empty. Could not export ROIs.");
-            } else {
-                File targetFile = getUniqueFile(dir, filename + "_rois", ".zip");
-                if (!targetFile.getName().equals(filename + "_rois.zip")) {
-                    autoRenamed = true;
-                }
-                try {
-                    rm.runCommand("Save", targetFile.getAbsolutePath());
-                    savedZipFile = targetFile;
-                } catch (Exception ex) {
-                    IJ.showMessage("Export NanoTool Data", "Error saving ROIs file: " + ex.getMessage());
-                }
-            }
-        }
-
-        StringBuilder msg = new StringBuilder("Export successful!\n\nSaved files:\n");
-        if (savedTxtFile != null) {
-            msg.append("- ").append(savedTxtFile.getName()).append("\n");
-        }
-        if (savedZipFile != null) {
-            msg.append("- ").append(savedZipFile.getName()).append("\n");
-        }
-        msg.append("\nDirectory: ").append(dir);
-
-        if (autoRenamed) {
-            msg.append("\n\nNote: Existing files with the same name were found, so incremental suffixes were added automatically to avoid overwriting.");
-        }
-
-        IJ.showStatus("Export complete.");
-        IJ.showMessage("Export NanoTool Data", msg.toString());
     }
+
+    // -------------------------------------------------------------------------
+    // Import ROIs (.zip / .roi)
+    // -------------------------------------------------------------------------
 
     public static void importRois() {
         ImagePlus imp = WindowManager.getCurrentImage();
@@ -151,9 +147,9 @@ public class RoiExportImportUtility {
 
         // Check if ROI filename matches active image title
         String imageTitle = imp.getTitle();
-        String imgBaseName = imageTitle.contains(".") ? imageTitle.substring(0, imageTitle.lastIndexOf('.')) : imageTitle;
+        String imgBaseName = stripExtension(imageTitle);
 
-        String roiBaseName = filename.contains(".") ? filename.substring(0, filename.lastIndexOf('.')) : filename;
+        String roiBaseName = stripExtension(filename);
         String cleanedRoiBase = roiBaseName;
         if (cleanedRoiBase.toLowerCase().endsWith("_rois")) {
             cleanedRoiBase = cleanedRoiBase.substring(0, cleanedRoiBase.length() - 5);
@@ -191,10 +187,21 @@ public class RoiExportImportUtility {
             rm.runCommand(imp, "Show All");
             int count = rm.getCount();
             IJ.showStatus("Imported ROIs successfully. Total ROIs: " + count);
-            IJ.showMessage("Import ROIs", "Successfully imported ROIs from:\n" + filename + "\nTotal ROIs in ROI Manager: " + count);
+            IJ.showMessage("Import ROIs",
+                    "Successfully imported ROIs from:\n" + filename
+                    + "\nTotal ROIs in ROI Manager: " + count);
         } catch (Exception ex) {
             IJ.showMessage("Import ROIs", "Error importing ROIs: " + ex.getMessage());
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal helpers
+    // -------------------------------------------------------------------------
+
+    private static String stripExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        return dot > 0 ? filename.substring(0, dot) : filename;
     }
 
     private static File getUniqueFile(String dir, String prefix, String extension) {
@@ -202,7 +209,6 @@ public class RoiExportImportUtility {
         if (!file.exists()) {
             return file;
         }
-
         int counter = 1;
         while (true) {
             File candidate = new File(dir, prefix + "_" + counter + extension);

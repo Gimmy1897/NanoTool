@@ -1,0 +1,8 @@
+@echo off
+cd /d "%~dp0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install_nanotool.ps1"
+if errorlevel 1 (
+    echo.
+    echo Installation failed.
+    pause
+)

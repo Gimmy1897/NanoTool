@@ -32,9 +32,12 @@ if not exist bin\plugins.config (
 )
 
 cd bin
+if not exist macros mkdir macros
+copy /y ..\src\macros\RunAtStartup.ijm macros\RunAtStartup.ijm
 jar cf ..\Cell_Magic_Wand_Tool.jar plugins.config *.class cellMagicWand\*.class
 copy /y ..\src\plugins-nanotool.config plugins.config
 jar cf ..\NanoTool_Launcher_Tool.jar plugins.config *.class cellMagicWand\*.class
+copy /y ..\src\plugins-nanotool.config plugins.config
 jar cf ..\NanoTool.jar plugins.config *.class cellMagicWand\*.class
 cd ..
 
@@ -44,5 +47,10 @@ if not exist Cell_Magic_Wand_Tool.jar (
     exit /b 1
 )
 
-echo Done! Copy Cell_Magic_Wand_Tool.jar and NanoTool_Launcher_Tool.jar to your Fiji installation's plugins\Tools folder.
+echo Done! NanoTool_Launcher_Tool.jar contains NanoTool and Cell Magic Wand.
+echo To install NanoTool automatically, run install_nanotool.bat.
+copy /y src\macros\RunAtStartup.ijm RunAtStartup.ijm
+if errorlevel 1 (
+    echo WARNING: unable to copy RunAtStartup.ijm next to the installer.
+)
 pause

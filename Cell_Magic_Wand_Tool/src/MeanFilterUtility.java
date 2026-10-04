@@ -25,6 +25,7 @@ public class MeanFilterUtility {
 
         IJ.run(imp, "Mean...", "radius=" + radius);
         imp.updateAndDraw();
+        NanoToolProjectUtility.incrementMeanFilterCount(imp);
 
         IJ.showStatus("Mean filter applied (radius=" + radius + " px).");
         IJ.showMessage("NanoTool", "Mean filter " + radius + " px applied to image " + imp.getTitle() + ".");
