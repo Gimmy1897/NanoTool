@@ -25,7 +25,11 @@ public class NanoToolStartup implements PlugIn, ImageListener {
     @Override
     public void imageOpened(ImagePlus imp) {
         if (isNanoToolProject(imp)) {
-            NanoToolProjectUtility.initializeOpenedProject(imp);
+            if (NanoToolProjectUtility.isImageEventHandled(imp)) {
+                return;
+            }
+            NanoToolProjectUtility.markImageEventHandled(imp);
+            java.awt.EventQueue.invokeLater(() -> openProjectIfAllowed(imp));
         }
     }
 
@@ -50,5 +54,18 @@ public class NanoToolStartup implements PlugIn, ImageListener {
             return name != null && name.toLowerCase().endsWith(".ntproj");
         }
         return false;
+    }
+
+    private void openProjectIfAllowed(ImagePlus imp) {
+        if (imp == null) {
+            return;
+        }
+        if (!NanoToolDashboard.confirmCloseForExternalProject(imp)) {
+            imp.changes = false;
+            imp.close();
+            return;
+        }
+        imp.show();
+        NanoToolProjectUtility.initializeOpenedProject(imp);
     }
 }

@@ -2,7 +2,7 @@
 
 NanoTool Dashboard is an ImageJ/Fiji plugin for nanoparticle image analysis.
 
-**Current version:** 1.0.3
+**Current version:** 1.0.4
 
 The dashboard provides:
 

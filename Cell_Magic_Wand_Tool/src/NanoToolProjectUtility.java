@@ -15,6 +15,7 @@ import java.io.*;
 public class NanoToolProjectUtility {
 
     private static final String MEAN_FILTER_COUNT_PROPERTY = "NanoTool.MeanFilterCount";
+    private static final String IMAGE_EVENT_HANDLED_PROPERTY = "NanoTool.ImageEventHandled";
     /** Path of the currently open .ntproj file, or null if unsaved. */
     private static File currentProjectFile = null;
     private static ImagePlus overlayImage;
@@ -29,6 +30,10 @@ public class NanoToolProjectUtility {
     /** Returns the path of the currently open project file (may be null). */
     public static File getCurrentProjectFile() {
         return currentProjectFile;
+    }
+
+    public static ImagePlus getProjectImage() {
+        return overlayImage;
     }
 
     /** Sets the current project file (called when opening or saving). */
@@ -48,6 +53,16 @@ public class NanoToolProjectUtility {
             return Math.max(0, Integer.parseInt(value.toString()));
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    public static boolean isImageEventHandled(ImagePlus imp) {
+        return imp != null && Boolean.TRUE.equals(imp.getProperty(IMAGE_EVENT_HANDLED_PROPERTY));
+    }
+
+    public static void markImageEventHandled(ImagePlus imp) {
+        if (imp != null) {
+            imp.setProperty(IMAGE_EVENT_HANDLED_PROPERTY, Boolean.TRUE);
         }
     }
 
@@ -74,8 +89,8 @@ public class NanoToolProjectUtility {
     /**
      * Save Project As: always asks the user for a file path.
      */
-    public static void saveProjectAs() {
-        ImagePlus imp = WindowManager.getCurrentImage();
+public static void saveProjectAs() {
+        ImagePlus imp = NanoToolDashboard.getDashboardImage();
         if (imp == null) {
             IJ.showMessage("Save Project", "No image is open.");
             return;
@@ -101,7 +116,14 @@ public class NanoToolProjectUtility {
     }
 
     public static void closeProject() {
-        ImagePlus imp = NanoToolDashboard.getAnalysisImage();
+        closeProject(overlayImage);
+    }
+
+    public static void closeProject(ImagePlus projectImage) {
+        ImagePlus imp = projectImage;
+        if (imp == null) {
+            imp = NanoToolDashboard.getAnalysisImage();
+        }
         if (imp == null) {
             imp = WindowManager.getCurrentImage();
         }
@@ -109,21 +131,27 @@ public class NanoToolProjectUtility {
             return;
         }
 
+        // Close all open windows except ImageJ itself and the NanoTool dashboard
+        java.awt.Frame[] frames = java.awt.Frame.getFrames();
+        for (java.awt.Frame f : frames) {
+            String title = f.getTitle();
+            if (title != null && !title.equals("NanoTool") && !title.equals("ImageJ")) {
+                f.dispose();
+            }
+        }
+
         RoiManager rm = RoiManager.getInstance2();
         if (rm != null) {
             rm.close();
         }
 
-        java.awt.Frame results = WindowManager.getFrame("Results");
-        if (results != null) {
-            results.dispose();
-        }
-
-        imp.close();
+        // Reset state before closing the image to avoid syncProjectOverlay errors
         currentProjectFile = null;
         overlayImage = null;
         overlaySignature = null;
         NanoToolDashboard.clearAnalysisImage();
+
+        imp.close();
         NanoToolDashboard.updateRoiCount();
     }
 
@@ -151,6 +179,9 @@ public class NanoToolProjectUtility {
             return;
         }
 
+        if (!NanoToolDashboard.confirmCloseForNewProject()) {
+            return;
+        }
         loadProjectFile(file);
     }
 
@@ -167,6 +198,7 @@ public class NanoToolProjectUtility {
         }
 
         imp.setTitle(baseName(ntprojFile.getName()));
+        markImageEventHandled(imp);
         if (showImage) {
             imp.show();
         }
@@ -181,16 +213,25 @@ public class NanoToolProjectUtility {
         }
 
         Overlay overlay = imp.getOverlay();
-        if (overlay != null && overlay.size() > 0) {
-            RoiManager rm = RoiManager.getInstance2();
-            if (rm == null) {
-                rm = new RoiManager();
-            }
+        imp.deleteRoi();
+        imp.setOverlay(null);
+
+        RoiManager rm = RoiManager.getInstance2();
+        if (rm == null) {
+            rm = new RoiManager();
+        } else {
+            rm.runCommand("Show None");
             rm.reset();
+        }
+
+        if (overlay != null && overlay.size() > 0) {
             for (int i = 0; i < overlay.size(); i++) {
                 rm.addRoi(overlay.get(i));
             }
             rm.runCommand(imp, "Show All");
+        } else {
+            imp.deleteRoi();
+            imp.setOverlay(null);
         }
 
         if (imp.getOriginalFileInfo() != null
@@ -210,14 +251,14 @@ public class NanoToolProjectUtility {
 
     public static void syncProjectOverlay() {
         ImagePlus imp = WindowManager.getCurrentImage();
-        if (imp == null || currentProjectFile == null) {
+        if (imp == null || currentProjectFile == null || imp != overlayImage) {
             return;
         }
 
         RoiManager rm = RoiManager.getInstance2();
         Roi[] rois = rm == null ? new Roi[0] : rm.getRoisAsArray();
         String signature = getRoiSignature(rois);
-        if (imp == overlayImage && signature.equals(overlaySignature)) {
+        if (signature.equals(overlaySignature)) {
             return;
         }
 
@@ -228,7 +269,6 @@ public class NanoToolProjectUtility {
 
         imp.setOverlay(overlay.size() == 0 ? null : overlay);
         imp.updateAndDraw();
-        overlayImage = imp;
         overlaySignature = signature;
     }
 
@@ -270,8 +310,11 @@ public class NanoToolProjectUtility {
     // -------------------------------------------------------------------------
 
     /** Saves the current session as a TIFF-based .ntproj project. */
-    private static boolean saveToFile(File dest) {
-        ImagePlus imp = WindowManager.getCurrentImage();
+private static boolean saveToFile(File dest) {
+        ImagePlus imp = overlayImage;
+        if (imp == null) {
+            imp = NanoToolDashboard.getDashboardImage();
+        }
         if (imp == null) {
             IJ.showMessage("Save Project", "No image is open.");
             return false;
@@ -337,3 +380,4 @@ public class NanoToolProjectUtility {
     }
 
 }
+

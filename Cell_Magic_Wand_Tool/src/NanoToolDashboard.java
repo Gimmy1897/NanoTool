@@ -1,14 +1,16 @@
 import ij.plugin.PlugIn;
 import ij.plugin.frame.PlugInFrame;
+import ij.ImageListener;
+import ij.ImagePlus;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class NanoToolDashboard extends PlugInFrame implements PlugIn {
+public class NanoToolDashboard extends PlugInFrame implements PlugIn, ImageListener {
 
-    private static final String VERSION = "1.0.3";
+    private static final String VERSION = "1.0.4";
     private static NanoToolDashboard dashboard;
     private static ij.ImagePlus analysisImageOverride;
     private final Cell_Magic_Wand_Tool wandTool = new Cell_Magic_Wand_Tool();
@@ -31,6 +33,13 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
     private JButton btnExportMeasurements;
     private JButton btnExportRois;
     private JButton btnImport;
+    private MenuItem saveProjectItem;
+    private MenuItem saveProjectAsItem;
+    private MenuItem closeProjectItem;
+    private MenuItem importRoisItem;
+    private MenuItem exportMeasurementsItem;
+    private MenuItem exportRoisItem;
+    private boolean openingImageOrProject;
 
     public NanoToolDashboard() {
         super("NanoTool");
@@ -42,6 +51,8 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         } catch (Exception ignored) {}
         EqDiameterUtility.ensureDefaultMeasurements();
         buildUI();
+        NanoToolStartup.install();
+        ij.ImagePlus.addImageListener(this);
         pack();
         setResizable(false);
         positionOnRight();
@@ -58,6 +69,106 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         setVisible(true);
         toFront();
         updateRoiCount();
+    }
+
+    public void imageOpened(ImagePlus image) {
+        if (openingImageOrProject || NanoToolProjectUtility.isImageEventHandled(image)
+                || image == analysisImageOverride || isNanoToolProject(image)
+                || NanoToolProjectUtility.getCurrentProjectFile() == null) {
+            return;
+        }
+
+        NanoToolProjectUtility.markImageEventHandled(image);
+        SwingUtilities.invokeLater(() -> handleExternalImageOpened(image));
+    }
+
+    public void imageClosed(ImagePlus image) {
+        if (image == null || NanoToolProjectUtility.getCurrentProjectFile() == null) {
+            return;
+        }
+        if (image == NanoToolDashboard.getAnalysisImage()) {
+            NanoToolDashboard.clearAnalysisImage();
+        }
+        if (image == NanoToolProjectUtility.getProjectImage()) {
+            NanoToolProjectUtility.closeProject(image);
+        }
+    }
+
+    public void imageUpdated(ImagePlus image) {
+    }
+
+    private boolean isNanoToolProject(ImagePlus image) {
+        if (image == null) {
+            return false;
+        }
+
+        String title = image.getTitle();
+        if (title != null && title.toLowerCase().endsWith(".ntproj")) {
+            return true;
+        }
+        if (image.getOriginalFileInfo() != null) {
+            String name = image.getOriginalFileInfo().fileName;
+            return name != null && name.toLowerCase().endsWith(".ntproj");
+        }
+        return false;
+    }
+
+    private void handleExternalImageOpened(ImagePlus image) {
+        if (image == null
+                || NanoToolProjectUtility.getCurrentProjectFile() == null
+                || image == analysisImageOverride) {
+            return;
+        }
+
+        ij.gui.ImageWindow imageWindow = image.getWindow();
+        if (imageWindow != null) {
+            imageWindow.setVisible(false);
+        }
+        ImagePlus projectImage = NanoToolProjectUtility.getProjectImage();
+        int choice = JOptionPane.showConfirmDialog(this,
+                "A NanoTool project is open. Close it before opening the new image?",
+                "Close current project",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (choice == JOptionPane.YES_OPTION) {
+            NanoToolProjectUtility.closeProject(projectImage);
+            clearRoisFromImage(image);
+            NanoToolProjectUtility.markImageEventHandled(image);
+            image.show();
+            setStatus("Project closed. New image opened.");
+        } else {
+            image.changes = false;
+            image.close();
+            setStatus("New image discarded. Current project remains open.");
+        }
+        updateRoiCount();
+    }
+
+    private void clearRoisFromImage(ImagePlus image) {
+        image.deleteRoi();
+        image.setOverlay(null);
+        image.updateAndDraw();
+        ij.plugin.frame.RoiManager roiManager =
+                ij.plugin.frame.RoiManager.getInstance2();
+        if (roiManager != null) {
+            roiManager.reset();
+        }
+    }
+
+    public static boolean confirmCloseForExternalProject(ImagePlus image) {
+        if (dashboard == null || image == null
+                || NanoToolProjectUtility.getCurrentProjectFile() == null
+                || image == analysisImageOverride) {
+            return true;
+        }
+        return dashboard.confirmAndCloseCurrentProject(image);
+    }
+
+    public static boolean confirmCloseForNewProject() {
+        if (dashboard == null || NanoToolProjectUtility.getCurrentProjectFile() == null) {
+            return true;
+        }
+        return dashboard.confirmAndCloseCurrentProject(null);
     }
 
     private void buildUI() {
@@ -234,13 +345,13 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         java.awt.MenuBar menuBar = new java.awt.MenuBar();
         java.awt.Menu fileMenu = new java.awt.Menu("File");
         addMenuItem(fileMenu, "Open project...", openProject);
-        addMenuItem(fileMenu, "Save project", save);
-        addMenuItem(fileMenu, "Save project as...", saveAs);
-        addMenuItem(fileMenu, "Close project", closeProject);
+        saveProjectItem = addMenuItem(fileMenu, "Save project", save);
+        saveProjectAsItem = addMenuItem(fileMenu, "Save project as...", saveAs);
+        closeProjectItem = addMenuItem(fileMenu, "Close project", closeProject);
         fileMenu.addSeparator();
-        addMenuItem(fileMenu, "Import ROIs...", importRois);
-        addMenuItem(fileMenu, "Export measurements", exportMeasurements);
-        addMenuItem(fileMenu, "Export ROIs", exportRois);
+        importRoisItem = addMenuItem(fileMenu, "Import ROIs...", importRois);
+        exportMeasurementsItem = addMenuItem(fileMenu, "Export measurements", exportMeasurements);
+        exportRoisItem = addMenuItem(fileMenu, "Export ROIs", exportRois);
         menuBar.add(fileMenu);
         java.awt.Menu helpMenu = new java.awt.Menu("Help");
         MenuItem credits = new MenuItem("Credits");
@@ -250,10 +361,11 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         return menuBar;
     }
 
-    private void addMenuItem(java.awt.Menu menu, String label, JButton source) {
+    private MenuItem addMenuItem(java.awt.Menu menu, String label, JButton source) {
         MenuItem item = new MenuItem(label);
         item.addActionListener(e -> source.doClick());
         menu.add(item);
+        return item;
     }
 
     private void positionOnRight() {
@@ -313,10 +425,19 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
 
     private void updateImageName() {
         ij.ImagePlus imp = getDashboardImage();
-        imageNameLabel.setText(imp == null ? "Image: no image open" : "Image: " + imp.getTitle());
+        if (imp == null) {
+            imageNameLabel.setText("Image: no image open");
+            return;
+        }
+        String title = imp.getTitle();
+        if (NanoToolProjectUtility.getCurrentProjectFile() != null) {
+            imageNameLabel.setText("Project: " + title);
+        } else {
+            imageNameLabel.setText("Image: " + title + " (not saved as project)");
+        }
     }
 
-    private void updateButtonStates() {
+private void updateButtonStates() {
         ij.ImagePlus imp = getDashboardImage();
         boolean hasImage = imp != null;
         ij.plugin.frame.RoiManager rm = ij.plugin.frame.RoiManager.getInstance2();
@@ -331,12 +452,30 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         btnMeasure.setEnabled(hasImage && hasRois);
         btnMeasureSettings.setEnabled(hasImage);
         btnStatistics.setEnabled(hasImage && hasResults);
-        btnSave.setEnabled(hasImage && hasProject);
-        btnSaveAs.setEnabled(hasImage);
-        btnCloseProject.setEnabled(hasProject);
-        btnExportMeasurements.setEnabled(hasImage && hasResults);
-        btnExportRois.setEnabled(hasImage && hasRois);
-        btnImport.setEnabled(hasImage);
+       btnSave.setEnabled(hasImage && hasProject);
+       btnSaveAs.setEnabled(hasImage);
+       btnCloseProject.setEnabled(hasProject);
+       btnExportMeasurements.setEnabled(hasImage && hasResults);
+       btnExportRois.setEnabled(hasImage && hasRois);
+       btnImport.setEnabled(hasImage);
+        if (saveProjectItem != null) {
+            saveProjectItem.setEnabled(hasImage && hasProject);
+        }
+        if (saveProjectAsItem != null) {
+            saveProjectAsItem.setEnabled(hasImage);
+        }
+        if (closeProjectItem != null) {
+            closeProjectItem.setEnabled(hasProject);
+        }
+        if (importRoisItem != null) {
+            importRoisItem.setEnabled(hasImage);
+        }
+        if (exportMeasurementsItem != null) {
+            exportMeasurementsItem.setEnabled(hasImage && hasResults);
+        }
+        if (exportRoisItem != null) {
+            exportRoisItem.setEnabled(hasImage && hasRois);
+        }
     }
 
     public static void setAnalysisImage(ij.ImagePlus image) {
@@ -351,7 +490,7 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         return analysisImageOverride;
     }
 
-    private static ij.ImagePlus getDashboardImage() {
+    public static ij.ImagePlus getDashboardImage() {
         if (analysisImageOverride != null) {
             return analysisImageOverride;
         }
@@ -416,32 +555,64 @@ public class NanoToolDashboard extends PlugInFrame implements PlugIn {
         }
 
         java.io.File selectedFile = new java.io.File(directory, fileName);
-        if (fileName.toLowerCase().endsWith(".ntproj")) {
-            if (NanoToolProjectUtility.loadProjectFile(selectedFile) != null) {
-                updateRoiCount();
-                updateScaleLabel();
-                setStatus("Project opened.");
-            } else {
-                setStatus("Unable to open project.");
+        if (NanoToolProjectUtility.getCurrentProjectFile() != null
+                && !confirmAndCloseCurrentProject(null)) {
+            return;
+        }
+
+        openingImageOrProject = true;
+        try {
+            if (fileName.toLowerCase().endsWith(".ntproj")) {
+                if (NanoToolProjectUtility.loadProjectFile(selectedFile) != null) {
+                    updateRoiCount();
+                    updateScaleLabel();
+                    setStatus("Project opened.");
+                } else {
+                    setStatus("Unable to open project.");
+                }
+                return;
             }
-            return;
+
+            ij.ImagePlus image = ij.IJ.openImage(directory + fileName);
+            if (image == null) {
+                ij.IJ.showMessage("NanoTool", "The selected file could not be opened as an image.");
+                setStatus("Unable to open image.");
+                return;
+            }
+
+            NanoToolProjectUtility.setCurrentProjectFile(null);
+            clearAnalysisImage();
+            ij.plugin.frame.RoiManager roiManager = ij.plugin.frame.RoiManager.getInstance2();
+            if (roiManager != null) {
+                roiManager.reset();
+            }
+            image.show();
+            updateRoiCount();
+            setStatus("Image opened.");
+        } finally {
+            openingImageOrProject = false;
+        }
+    }
+
+    private boolean confirmAndCloseCurrentProject(ImagePlus newImage) {
+        if (newImage != null) {
+            ij.gui.ImageWindow imageWindow = newImage.getWindow();
+            if (imageWindow != null) {
+                imageWindow.setVisible(false);
+            }
+        }
+        ImagePlus projectImage = NanoToolProjectUtility.getProjectImage();
+        int choice = JOptionPane.showConfirmDialog(this,
+                "A NanoTool project is open. Close it before opening the selected file?",
+                "Close current project",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) {
+            setStatus("Current project remains open.");
+            return false;
         }
 
-        ij.ImagePlus image = ij.IJ.openImage(directory + fileName);
-        if (image == null) {
-            ij.IJ.showMessage("NanoTool", "The selected file could not be opened as an image.");
-            setStatus("Unable to open image.");
-            return;
-        }
-
-        NanoToolProjectUtility.setCurrentProjectFile(null);
-        clearAnalysisImage();
-        ij.plugin.frame.RoiManager roiManager = ij.plugin.frame.RoiManager.getInstance2();
-        if (roiManager != null) {
-            roiManager.reset();
-        }
-        image.show();
-        updateRoiCount();
-        setStatus("Image opened.");
+        NanoToolProjectUtility.closeProject(projectImage);
+        return true;
     }
 }
